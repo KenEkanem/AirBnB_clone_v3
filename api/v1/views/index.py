@@ -1,49 +1,33 @@
 #!/usr/bin/python3
-"""
-    states.py file in v1/views
-"""
-from flask import abort, Flask, jsonify, request
+"""index.py to connect to API"""
 from api.v1.views import app_views
+from flask import Flask, Blueprint, jsonify
 from models import storage
-from models.place import Place
-from models.city import City
-from models.user import User
 
 
-@app_views.route("/cities/<city_id>/places", methods=["GET", "POST"],
-                 strict_slashes=False)
-def handle_places(city_id):
-    """
-    Method to return a JSON representation of all states
-    """
-    city_by_id = storage.get(City, city_id)
-    if city_by_id is None:
-        abort(404, 'Not found')
+stat = {
+    "amenities": "Amenity",
+    "cities": "City",
+    "places": "Place",
+    "reviews": "Review",
+    "states": "State",
+    "users": "User"
+}
 
-    if request.method == 'GET':
-        place_list = []
-        for place in city_by_id.places:
-            place_list.append(place.to_dict())
-        return jsonify(place_list)
 
-    elif request.method == 'POST':
-        post = request.get_json()
-        if post is None or type(post) != dict:
-            return jsonify({'error': 'Not a JSON'}), 400
-        elif post.get('name') is None:
-            return jsonify({'error': 'Missing name'}), 400
-        elif post.get('user_id') is None:
-            return jsonify({'error': 'Missing user_id'}), 400
+@app_views.route('/status', strict_slashes=False)
+def getHbnbStatus():
+    """hbnbStatus"""
+    return jsonify({"status": "OK"})
 
-        user_id = post['user_id']
 
-        user_by_id = storage.get(User, user_id)
-        city_by_id = storage.get(City, city_id)
+@app_views.route('/stats', strict_slashes=False)
+def getHbnbStats():
+    """hbnbStats"""
+    return_dict = {}
+    for key, value in stat.items():
+        return_dict[key] = storage.count(value)
+    return jsonify(return_dict)
 
-        if not user_by_id or not city_by_id:
-            abort(404)
-
-        new_place = Place(**post)
-        new_place.save()
-        return jsonify(new_place.to_dict()), 201
-
+if __name__ == "__main__":
+    pass
